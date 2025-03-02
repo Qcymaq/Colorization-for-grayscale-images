@@ -8,7 +8,7 @@ import torchvision.transforms as T
 
 
 class ColorizationDataset(Dataset):
-    def __init__(self, data_root="datasets/", image_size=1024):
+    def __init__(self, data_root="datasets/", image_size=512):
         """
         Args:
             data_root (str): Path to the dataset directory.

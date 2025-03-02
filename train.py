@@ -37,7 +37,7 @@ model.sampler = sampler
 model.model.half()
 
 # Misc
-dataset = SDXLDataset()
+dataset = ColorizationDataset()
 dataloader = DataLoader(dataset, num_workers=6, batch_size=batch_size, shuffle=True)
 logger = ImageLogger(log_interval=2)
 trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=1, precision=16, callbacks=[logger, checkpoint_callback],accumulate_grad_batches = accumulate_grad_batches, limit_train_batches=1.0, log_every_n_steps=1)

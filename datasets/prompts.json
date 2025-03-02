@@ -1,0 +1,4 @@
+{"source": "grayscale/image_0.jpg", "target": "color/image_0.jpg", "prompt": "Give realistic colors to this old photo"}
+{"source": "grayscale/image_1.jpg", "target": "color/image_1.jpg", "prompt": "Colorize this black and white image"}
+{"source": "grayscale/image_10.jpg", "target": "color/image_10.jpg", "prompt": "Give realistic colors to this old photo"}
+{"source": "grayscale/image_100.jpg", "target": "color/image_100.jpg", "prompt": "Colorize this image"}

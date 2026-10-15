@@ -14,7 +14,6 @@ A web app that adds natural colors to black-and-white photos. Under the hood it 
 - [Configuration](#configuration)
 - [API documentation](#api-documentation)
 - [Training](#training)
-- [Results](#results)
 - [Limitations](#limitations)
 - [Team & my role](#team--my-role)
 - [Acknowledgments](#acknowledgments)
@@ -227,10 +226,6 @@ What it expects:
 - **Images:** the COCO 2017 training images in `backend/src/data/training/target/` (they are not included in this repository). The list of file names and prompts is `backend/src/data/training/prompts.json` (taken from ColorizeNet). Only the color images are needed; the grayscale input is created on the fly.
 - **Starting weights:** `backend/src/checkpoints/epoch=2-step=44357.ckpt` (`resume_path` in `train.py`). To start from the original Stable Diffusion 2.1 weights instead, create an initial ControlNet checkpoint with `tool_add_control_sd21.py` from [lllyasviel/ControlNet](https://github.com/lllyasviel/ControlNet) and set `resume_path` to it.
 - **Settings in `train.py`:** batch size 4, learning rate 1e-5, Stable Diffusion weights locked, 32-bit precision, 1 GPU, 20 data loader workers (lower `num_workers` on machines with fewer CPU cores). Sample images are written to `image_log/` every 300 batches. Set `save_memory = True` in `backend/src/config.py` to enable sliced attention if GPU memory is short.
-
-## Results
-
-> **TODO:** add before/after examples here (grayscale input, colorized output, and the settings used). Put the images in `images/` and link them in a table.
 
 ## Limitations
 

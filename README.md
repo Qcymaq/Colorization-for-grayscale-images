@@ -71,8 +71,8 @@ Returns the colorized image in PNG format.
 
 ## Acknowledgments
 - This project uses the ControlNet architecture from [lllyasviel/ControlNet](https://github.com/lllyasviel/ControlNet).
-
-
+- The base model is Stable Diffusion 2.1 by Stability AI ([Stability-AI/stablediffusion](https://github.com/Stability-AI/stablediffusion)).
+- Data ideas from [rensortino/ColorizeNet](https://github.com/rensortino/ColorizeNet)
 
 
 ## Contributing

@@ -36,6 +36,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Path to the fine-tuned ControlNet checkpoint (not included in the repository).
+# Relative paths are resolved from the directory you start the server in (the repository root).
+CHECKPOINT_PATH = os.environ.get("CHECKPOINT_PATH", "backend/src/checkpoints/epoch=2-step=44357.ckpt")
+
 # Global variable to cache the model and sampler
 MODEL_CACHE = None
 
@@ -46,7 +50,7 @@ def load_model():
         print("Loading model for the first time...")
         model = create_model('backend/src/models/cldm_v21.yaml').cpu()
         model.load_state_dict(load_state_dict(
-            r'backend/src/checkpoints/epoch=2-step=44357.ckpt', location='cuda'))
+            CHECKPOINT_PATH, location='cuda'))
         model = model.cuda()
         sampler = DDIMSampler(model)
         MODEL_CACHE = (model, sampler)

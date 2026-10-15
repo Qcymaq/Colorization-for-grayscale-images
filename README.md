@@ -1,6 +1,6 @@
 # Colorization for Grayscale Images
 
-A web app that adds natural colors to black-and-white photos. Under the hood it uses a ControlNet on top of Stable Diffusion 2.1, fine-tuned for colorization: the grayscale photo guides the image structure, a short text prompt (for example "Colorize this image") guides the result, and the original brightness of the photo is kept so that its details are preserved. A FastAPI backend runs the model and exposes one HTTP endpoint, and a Streamlit frontend lets you upload a photo, tune the settings and download the result.
+A web app that adds natural colors to black-and-white photos. Under the hood it uses a ControlNet on top of Stable Diffusion 2.1, fine-tuned for colorization: the grayscale photo guides the image structure, a short text prompt (for example "Colorize this image") guides the result, and the original brightness of the photo is kept so that its details are preserved. A FastAPI backend runs the model and exposes one HTTP endpoint, and a Streamlit frontend lets you upload a photo, tune the settings and download the result. The model setup, the training list and the inference steps are based on the open-source [ColorizeNet](https://github.com/rensortino/ColorizeNet) project (see [Acknowledgments](#acknowledgments)).
 
 ![Screenshot of the Streamlit UI for image colorization](images/ui.jpg)
 

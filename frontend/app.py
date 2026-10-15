@@ -2,6 +2,7 @@ import os
 import sys
 import base64
 import io
+import math
 import streamlit as st
 from PIL import Image
 import requests
@@ -10,7 +11,18 @@ import requests
 # Base URL of the FastAPI backend.
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000").rstrip("/")
 # Seconds to wait for the backend. The first request also loads the model, so keep it generous.
-REQUEST_TIMEOUT = float(os.environ.get("REQUEST_TIMEOUT", "300"))
+DEFAULT_REQUEST_TIMEOUT = 300.0
+REQUEST_TIMEOUT_WARNING = None
+try:
+    REQUEST_TIMEOUT = float(os.environ.get("REQUEST_TIMEOUT", DEFAULT_REQUEST_TIMEOUT))
+    if not math.isfinite(REQUEST_TIMEOUT) or REQUEST_TIMEOUT <= 0:
+        raise ValueError
+except ValueError:
+    REQUEST_TIMEOUT_WARNING = (
+        f"REQUEST_TIMEOUT must be a positive number of seconds; using the default "
+        f"of {DEFAULT_REQUEST_TIMEOUT:.0f} seconds instead."
+    )
+    REQUEST_TIMEOUT = DEFAULT_REQUEST_TIMEOUT
 # Optional background image for the page. Defaults to image.jpg in the repository root.
 BACKGROUND_IMAGE = os.environ.get(
     "BACKGROUND_IMAGE",
@@ -102,6 +114,8 @@ def streamlit_ui():
 
     # Title
     st.markdown('<p class="title">Image Colorization with Stable Diffusion</p>', unsafe_allow_html=True)
+    if REQUEST_TIMEOUT_WARNING:
+        st.warning(REQUEST_TIMEOUT_WARNING)
     
     # Create a sidebar for parameters
     with st.sidebar:

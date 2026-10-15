@@ -71,6 +71,8 @@ class ColorizationParams(BaseModel):
     eta: float = 0.0
 
 # Function to process and colorize images
+# The inference steps follow gradio_colorization.py in ColorizeNet,
+# https://github.com/rensortino/ColorizeNet (Apache-2.0). See THIRD_PARTY_NOTICES.md.
 def process(input_image, params):
     with torch.no_grad():
         # Convert to numpy array if it's a PIL image

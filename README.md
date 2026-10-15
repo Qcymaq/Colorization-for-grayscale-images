@@ -103,7 +103,7 @@ export CHECKPOINT_PATH=/path/to/your/colorization.ckpt          # Linux / macOS
 # $env:CHECKPOINT_PATH = "C:\path\to\your\colorization.ckpt"     # Windows PowerShell
 ```
 
-The model is loaded on the **first request**, not when the server starts, and then stays in memory. A wrong path shows up as an error on that first request.
+The model is loaded on the **first request**, not when the server starts, and then stays in memory. A wrong path shows up as an error on that first request. On a new machine the first request also downloads the OpenCLIP text encoder weights (several gigabytes), so it can take much longer than later requests.
 
 ### 4. Start the backend
 
@@ -125,6 +125,14 @@ streamlit run frontend/app.py
 
 Open `http://localhost:8501`, upload a grayscale image, adjust the settings in the sidebar and click **Colorize Image**. You can then download the result as a PNG.
 
+> **First run:** the UI waits at most `REQUEST_TIMEOUT` seconds (default 300) for an answer. The very first request downloads the OpenCLIP weights and loads the checkpoint, which can take longer than that. If the UI says the backend did not answer in time, the backend may still finish the job, but the result is lost. To avoid this, send one warm-up request before you use the UI (curl waits as long as needed):
+>
+> ```bash
+> curl -X POST http://localhost:8000/api/colorize -F "file=@path/to/any_image.jpg" --output warmup.png
+> ```
+>
+> Or start the frontend with a longer timeout, for example `REQUEST_TIMEOUT=1800 streamlit run frontend/app.py`.
+
 ## Configuration
 
 All settings are optional environment variables.
@@ -133,7 +141,7 @@ All settings are optional environment variables.
 |---|---|---|---|
 | `CHECKPOINT_PATH` | backend | `backend/src/checkpoints/epoch=2-step=44357.ckpt` | Path to the model checkpoint. Relative paths are resolved from the directory you start the server in. |
 | `BACKEND_URL` | frontend | `http://localhost:8000` | Base URL of the backend API. |
-| `REQUEST_TIMEOUT` | frontend | `300` | Seconds to wait for the backend. The first request also loads the model, so keep this generous. |
+| `REQUEST_TIMEOUT` | frontend | `300` | Seconds to wait for the backend. The first request also downloads the OpenCLIP weights and loads the model, so raise this (for example to `1800`) or send a warm-up request first. Must be a positive number; an invalid value falls back to `300` and the UI shows a warning. |
 | `BACKGROUND_IMAGE` | frontend | `image.jpg` in the repository root | Optional page background image. If the file does not exist, the page has no background image. |
 
 ## API documentation

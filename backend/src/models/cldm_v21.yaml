@@ -1,3 +1,5 @@
+# Adapted from models/cldm_v21.yaml in ColorizeNet, https://github.com/rensortino/ColorizeNet (Apache-2.0).
+# Changed for this project: hint_channels 5 -> 3. See THIRD_PARTY_NOTICES.md.
 model:
   target: cldm.cldm.ControlLDM
   params:

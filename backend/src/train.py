@@ -1,3 +1,5 @@
+# Adapted from train.py in ColorizeNet, https://github.com/rensortino/ColorizeNet (Apache-2.0).
+# Changed for this project. See THIRD_PARTY_NOTICES.md.
 from share import *
 
 import pytorch_lightning as pl

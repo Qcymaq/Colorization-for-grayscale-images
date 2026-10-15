@@ -27,28 +27,34 @@ A web app that adds natural colors to black-and-white photos. Under the hood it 
 3. **Sampling.** The model generates a color image with the DDIM sampler (default 20 steps) and classifier-free guidance (default scale 9.0) with a negative prompt.
 4. **Keep the original details.** The input and the generated image are converted to the LAB color space. The result keeps the **L (lightness) channel of the input** and takes only the **a/b (color) channels from the generated image**. The model therefore only decides the colors; edges and textures come from the original photo.
 
-**Training data.** The training list `backend/src/data/training/prompts.json` has 118,287 entries, one per image of the COCO 2017 training set (`train2017`, file names are COCO image IDs such as `000000129852.jpg`). Each entry pairs a color image with one of 10 short prompts such as "Colorize this grayscale image". During training the dataset loader makes the grayscale input from the color image with OpenCV, so every example is a grayscale/color pair. The Stable Diffusion 2.1 weights stay locked (`sd_locked = True`) and only the ControlNet part is trained. See [Training](#training).
+These inference steps, including the LAB color transfer, follow the demo script of [ColorizeNet](https://github.com/rensortino/ColorizeNet). See [Acknowledgments](#acknowledgments) for everything this project reuses.
+
+**Training data.** The training list `backend/src/data/training/prompts.json` was taken unchanged from [ColorizeNet](https://github.com/rensortino/ColorizeNet); the team did not create it. It has 118,287 entries, one per image of the COCO 2017 training set (`train2017`, file names are COCO image IDs such as `000000129852.jpg`). Each entry pairs a color image with one of 10 short prompts such as "Colorize this grayscale image". During training the dataset loader makes the grayscale input from the color image with OpenCV, so every example is a grayscale/color pair. The Stable Diffusion 2.1 weights stay locked (`sd_locked = True`) and only the ControlNet part is trained. See [Training](#training).
 
 ## Project structure
 
 ```text
 .
 ├── backend/src/
-│   ├── main.py                 # FastAPI app: POST /api/colorize (inference)
-│   ├── train.py                # ControlNet fine-tuning script (PyTorch Lightning)
-│   ├── data/dataset.py         # Dataset: color image -> (grayscale hint, color target, prompt)
-│   ├── data/training/prompts.json  # Training list (COCO train2017 file names + prompts)
-│   ├── models/cldm_v21.yaml    # Model config (ControlNet + Stable Diffusion 2.1)
-│   ├── utils/                  # Inference helpers: resize, LAB color transfer, DDIM sampler, model loading
+│   ├── main.py                 # FastAPI app: POST /api/colorize (inference steps adapted from ColorizeNet)
+│   ├── train.py                # ControlNet fine-tuning script (adapted from ColorizeNet)
+│   ├── data/dataset.py         # Dataset: color image -> (grayscale hint, color target, prompt) (adapted from ColorizeNet)
+│   ├── data/training/prompts.json  # Training list: COCO train2017 file names + prompts (from ColorizeNet)
+│   ├── models/cldm_v21.yaml    # Model config: ControlNet + Stable Diffusion 2.1 (adapted from ColorizeNet)
+│   ├── utils/                  # Helpers: resize, LAB color transfer, DDIM sampler, model loading (from ColorizeNet)
 │   ├── cldm/                   # ControlNet code (from lllyasviel/ControlNet)
 │   ├── ldm/                    # Stable Diffusion code (from lllyasviel/ControlNet / Stability AI)
-│   └── config.py, share.py     # Training options (e.g. memory saving)
+│   └── config.py, share.py     # Training options, e.g. memory saving (from ColorizeNet)
 ├── frontend/app.py             # Streamlit UI
 ├── images/ui.jpg               # UI screenshot
+├── licenses/Apache-2.0.txt     # License text for the ColorizeNet and ControlNet code
+├── THIRD_PARTY_NOTICES.md      # Which files come from which project, and under which license
 └── requirements.txt            # Python dependencies (full environment list)
 ```
 
-The early data-preparation scripts (download COCO from Hugging Face, save grayscale and color copies, write the prompt file) are kept on the [`convert_data`](https://github.com/Qcymaq/Colorization-for-grayscale-images/tree/convert_data) branch.
+"From" means the file was copied without changes; "adapted from" means the team changed it. [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) lists every file.
+
+An earlier, exploratory data pipeline is kept on the [`convert_data`](https://github.com/Qcymaq/Colorization-for-grayscale-images/tree/convert_data) branch. It downloads COCO from Hugging Face (`detection-datasets/coco`), saves grayscale and color copies, and writes a prompt file with its own set of 10 prompts. It was **not** used to build the final training list: `prompts.json` above comes from ColorizeNet.
 
 ## Setup
 
@@ -210,7 +216,7 @@ python train.py
 
 What it expects:
 
-- **Images:** the COCO 2017 training images in `backend/src/data/training/target/` (they are not included in this repository). The list of file names and prompts is `backend/src/data/training/prompts.json`. Only the color images are needed; the grayscale input is created on the fly.
+- **Images:** the COCO 2017 training images in `backend/src/data/training/target/` (they are not included in this repository). The list of file names and prompts is `backend/src/data/training/prompts.json` (taken from ColorizeNet). Only the color images are needed; the grayscale input is created on the fly.
 - **Starting weights:** `backend/src/checkpoints/epoch=2-step=44357.ckpt` (`resume_path` in `train.py`). To start from the original Stable Diffusion 2.1 weights instead, create an initial ControlNet checkpoint with `tool_add_control_sd21.py` from [lllyasviel/ControlNet](https://github.com/lllyasviel/ControlNet) and set `resume_path` to it.
 - **Settings in `train.py`:** batch size 4, learning rate 1e-5, Stable Diffusion weights locked, 32-bit precision, 1 GPU, 20 data loader workers (lower `num_workers` on machines with fewer CPU cores). Sample images are written to `image_log/` every 300 batches. Set `save_memory = True` in `backend/src/config.py` to enable sliced attention if GPU memory is short.
 
@@ -229,14 +235,16 @@ What it expects:
 
 This was a university course project (January to March 2025) built by a team of 4 to 5 students. I, **Mai Anh Quan** ([@Qcymaq](https://github.com/Qcymaq)), was the team lead.
 
+The project builds on open-source work. The model code, the training list and several helper files come from [ColorizeNet](https://github.com/rensortino/ColorizeNet) and [ControlNet](https://github.com/lllyasviel/ControlNet); see [Acknowledgments](#acknowledgments) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for the exact files.
+
 According to the Git history, I wrote:
 
-- the COCO data preparation scripts (`converted_coco.py` and `dataset/prompts_create.py` on the `convert_data` branch),
-- the FastAPI `/api/colorize` inference endpoint,
-- the Streamlit UI,
+- an early, exploratory COCO data-preparation pipeline (`converted_coco.py` and `dataset/prompts_create.py` on the `convert_data` branch); it was not used for the final training list, which came from ColorizeNet,
+- the FastAPI `/api/colorize` inference endpoint (the sampling steps inside it follow ColorizeNet's demo script),
+- the Streamlit UI (its settings and slider ranges mirror ColorizeNet's Gradio demo),
 - the model cache that keeps the model in memory between requests.
 
-My teammates also committed code, including the training code, the split into a separate server and client, and the UI styling. See the commit history for individual contributions.
+My teammates also committed code, including the training code (adapted from ColorizeNet), the split into a separate server and client, and the UI styling. See the commit history for individual contributions.
 
 Contact: quanmaianh.work@gmail.com · GitHub [@Qcymaq](https://github.com/Qcymaq) · LinkedIn [maq159](https://www.linkedin.com/in/maq159)
 
@@ -245,14 +253,17 @@ Contact: quanmaianh.work@gmail.com · GitHub [@Qcymaq](https://github.com/Qcymaq
 - **ControlNet** by Lvmin Zhang: [lllyasviel/ControlNet](https://github.com/lllyasviel/ControlNet). The code in `backend/src/cldm/` and `backend/src/ldm/` comes from this repository, and the training setup follows its approach.
 - **Stable Diffusion 2.1** by Stability AI: [Stability-AI/stablediffusion](https://github.com/Stability-AI/stablediffusion). It is the base model, and the `ldm/` code originally comes from this repository.
 - **OpenCLIP**: [mlfoundations/open_clip](https://github.com/mlfoundations/open_clip), the text encoder used by Stable Diffusion 2.1.
-- **ColorizeNet** by rensortino: [rensortino/ColorizeNet](https://github.com/rensortino/ColorizeNet), a ControlNet on Stable Diffusion 2.1 for image colorization. Our data ideas come from this project.
+- **ColorizeNet** by rensortino: [rensortino/ColorizeNet](https://github.com/rensortino/ColorizeNet) (Apache-2.0), a ControlNet on Stable Diffusion 2.1 for image colorization. This project is largely based on it:
+  - **Taken unchanged:** `backend/src/utils/` (`data.py`, `ddim.py`, `model.py`, `diffusion.py`), `backend/src/config.py`, `backend/src/share.py` and the training list `backend/src/data/training/prompts.json`.
+  - **Adapted:** `backend/src/models/cldm_v21.yaml` (`hint_channels` set to 3), `backend/src/train.py`, `backend/src/data/dataset.py` (from ColorizeNet's `colorization_dataset.py`), and the inference steps in `process()` in `backend/src/main.py` (from ColorizeNet's `gradio_colorization.py`: the default added and negative prompts, the guess-mode control scales and the LAB color transfer).
 - **COCO dataset**: [cocodataset.org](https://cocodataset.org/). The training images come from the COCO 2017 training set and are subject to the COCO terms of use.
 
 ## License
 
 No license has been chosen yet for the original code in this repository. (An earlier version of this README said MIT, but a LICENSE file was never added.) Until a LICENSE file is added, default copyright rules apply (all rights reserved), so please contact the team if you want to reuse the code.
 
-Code and models from other projects keep their own licenses. Please check the upstream repositories for the exact terms:
+Code, data and models from other projects keep their own licenses. [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) lists the files, and the Apache-2.0 text is in [`licenses/Apache-2.0.txt`](licenses/Apache-2.0.txt). Please check the upstream repositories for the exact terms:
 
+- Files from [rensortino/ColorizeNet](https://github.com/rensortino/ColorizeNet) (Apache-2.0): `backend/src/utils/`, `backend/src/config.py`, `backend/src/share.py` and `backend/src/data/training/prompts.json` (unchanged), and `backend/src/models/cldm_v21.yaml`, `backend/src/train.py`, `backend/src/data/dataset.py` and the inference steps in `backend/src/main.py` (adapted).
 - `backend/src/cldm/` and `backend/src/ldm/`: [lllyasviel/ControlNet](https://github.com/lllyasviel/ControlNet) (Apache-2.0), which builds on [Stability-AI/stablediffusion](https://github.com/Stability-AI/stablediffusion) (MIT).
 - Stable Diffusion 2.1 model weights: CreativeML Open RAIL++-M license.

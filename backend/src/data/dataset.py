@@ -1,3 +1,5 @@
+# Adapted from colorization_dataset.py in ColorizeNet, https://github.com/rensortino/ColorizeNet (Apache-2.0).
+# Changed for this project. See THIRD_PARTY_NOTICES.md.
 import json
 import cv2
 import numpy as np

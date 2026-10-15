@@ -2,9 +2,44 @@ import os
 import sys
 import base64
 import io
+import math
 import streamlit as st
 from PIL import Image
 import requests
+
+# Settings (override with environment variables)
+# Base URL of the FastAPI backend.
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000").rstrip("/")
+# Seconds to wait for the backend. The first request also loads the model, so keep it generous.
+DEFAULT_REQUEST_TIMEOUT = 300.0
+REQUEST_TIMEOUT_WARNING = None
+try:
+    REQUEST_TIMEOUT = float(os.environ.get("REQUEST_TIMEOUT", DEFAULT_REQUEST_TIMEOUT))
+    if not math.isfinite(REQUEST_TIMEOUT) or REQUEST_TIMEOUT <= 0:
+        raise ValueError
+except ValueError:
+    REQUEST_TIMEOUT_WARNING = (
+        f"REQUEST_TIMEOUT must be a positive number of seconds; using the default "
+        f"of {DEFAULT_REQUEST_TIMEOUT:.0f} seconds instead."
+    )
+    REQUEST_TIMEOUT = DEFAULT_REQUEST_TIMEOUT
+# Optional background image for the page. Defaults to image.jpg in the repository root.
+BACKGROUND_IMAGE = os.environ.get(
+    "BACKGROUND_IMAGE",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "image.jpg"),
+)
+
+
+def get_error_message(response):
+    """Return a readable error message, whether or not the backend replied with JSON."""
+    try:
+        detail = response.json().get("detail")
+    except (ValueError, AttributeError):
+        detail = None
+    if not detail:
+        detail = response.text.strip()[:500] or response.reason or "Unknown error"
+    return f"{response.status_code}: {detail}"
+
 
 # Streamlit UI
 def streamlit_ui():
@@ -15,8 +50,8 @@ def streamlit_ui():
 
     # Try to get background image, use fallback if not found
     try:
-        bg_image = get_base64_of_image(r"D:\Diffusion\Colorization-for-grayscale-images\image.jpg")
-    except:
+        bg_image = get_base64_of_image(BACKGROUND_IMAGE)
+    except OSError:
         # Fallback to no background if image not found
         bg_image = None
         
@@ -79,6 +114,8 @@ def streamlit_ui():
 
     # Title
     st.markdown('<p class="title">Image Colorization with Stable Diffusion</p>', unsafe_allow_html=True)
+    if REQUEST_TIMEOUT_WARNING:
+        st.warning(REQUEST_TIMEOUT_WARNING)
     
     # Create a sidebar for parameters
     with st.sidebar:
@@ -128,13 +165,23 @@ def streamlit_ui():
             with st.spinner("🔄 Colorizing..."):
                 # Send request to backend API
                 files = {"file": uploaded_file.getvalue()}
-                response = requests.post("http://localhost:8000/api/colorize", files=files, data=params)
-                
-                if response.status_code == 200:
+                try:
+                    response = requests.post(f"{BACKEND_URL}/api/colorize", files=files, data=params,
+                                             timeout=REQUEST_TIMEOUT)
+                except requests.exceptions.Timeout:
+                    response = None
+                    st.error(f"Error: the backend did not answer within {REQUEST_TIMEOUT:.0f} seconds.")
+                except requests.exceptions.RequestException as e:
+                    response = None
+                    st.error(f"Error: could not reach the backend at {BACKEND_URL} ({e}).")
+
+                if response is None:
+                    st.session_state.processing = False
+                elif response.status_code == 200:
                     st.session_state.output_image = Image.open(io.BytesIO(response.content))
                     st.session_state.processing = False
                 else:
-                    st.error(f"Error: {response.json().get('detail', 'Unknown error')}")
+                    st.error(f"Error: {get_error_message(response)}")
                     st.session_state.processing = False
         
         # Display both images side by side

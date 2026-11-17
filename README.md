@@ -60,7 +60,7 @@ An earlier, exploratory data pipeline is kept on the [`convert_data`](https://gi
 ### Prerequisites
 
 - An **NVIDIA GPU with CUDA**. The backend moves the model to the GPU with `.cuda()` and has no CPU fallback.
-- **Python 3.8** is what the original environment used (the bytecode files that were committed earlier were built with CPython 3.8). Newer Python versions may fail to install some of the pinned packages.
+- **Python 3.10**. The original environment used Python 3.8 (the bytecode files that were committed earlier were built with CPython 3.8), but the security fixes in `aiohttp` 3.14.4 and later need Python 3.10 or newer, so the pinned packages now target 3.10. Newer Python versions may fail to install some of the older pinned packages.
 - **Git**, because one dependency (`open-clip-torch`) is installed from a Git commit.
 - Internet access on the first start: the OpenCLIP ViT-H-14 text encoder weights are downloaded automatically when the model is created.
 
